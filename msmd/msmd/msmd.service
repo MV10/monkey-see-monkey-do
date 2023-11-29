@@ -1,0 +1,9 @@
+﻿[Unit]
+Description=Monkey Hi Hat TCP Relay
+
+[Service]
+Type=notify
+ExecStart=/usr/sbin/msmd
+
+[Install]
+WantedBy=multi-user.target
