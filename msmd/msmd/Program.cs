@@ -39,6 +39,14 @@ internal class Program
 
     private static async Task<bool> WindowsLauncher()
     {
+        if(Environment.UserInteractive)
+        {
+
+        }
+        else
+        {
+            // https://stackoverflow.com/questions/4278373/
+        }
         return false;
     }
 

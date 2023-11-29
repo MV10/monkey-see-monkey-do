@@ -80,19 +80,17 @@ public static class TcpRelayServer
             if(!client.Connected)
             {
                 if (!await Task.Run(Config.Launcher)) return (false, null);
-            }
 
-            // try to connect to MHH again
-            await client.ConnectAsync(IPAddress.Loopback, Config.MHHPort).ConfigureAwait(false);
-            if (!client.Connected) return (false, null);
+                // try to connect to MHH again
+                await client.ConnectAsync(IPAddress.Loopback, Config.MHHPort).ConfigureAwait(false);
+                if (!client.Connected) return (false, null);
+            }
 
             // send the message
             await WriteString(client, message);
 
             // try to get a response
             var response = await ReadString(client);
-
-            //
             return (true, response);
         }
         catch (SocketException ex)
