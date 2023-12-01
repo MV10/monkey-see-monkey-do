@@ -17,9 +17,6 @@ public static class Config
     // mhh.conf UnsecuredPort
     public static int MHHPort = 0;
 
-    // callback used when TryConnect fails
-    public static Func<Task<bool>> Launcher;
-
     static Config()
     {
         var pathname = FindAppConfig();

@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
+using System.Diagnostics;
 
 namespace msmd;
 
@@ -71,33 +72,39 @@ public static class TcpRelayServer
     private static async Task<(bool success, string response)> TryRelay(string message)
     {
         using TcpClient client = new();
+        // try to connect to MHH; ConnectionRefused means nothing is listening
         try
         {
-            // try to connect to MHH
             await client.ConnectAsync(IPAddress.Loopback, Config.MHHPort).ConfigureAwait(false);
-            
-            // if it didn't work, try to launch MHH
-            if(!client.Connected)
-            {
-                if (!await Task.Run(Config.Launcher)) return (false, null);
-
-                // try to connect to MHH again
-                await client.ConnectAsync(IPAddress.Loopback, Config.MHHPort).ConfigureAwait(false);
-                if (!client.Connected) return (false, null);
-            }
-
-            // send the message
-            await WriteString(client, message);
-
-            // try to get a response
-            var response = await ReadString(client);
-            return (true, response);
         }
-        catch (SocketException ex)
+        catch(SocketException ex)
         {
-            if (ex.SocketErrorCode == SocketError.ConnectionRefused) return (false, null);
-            throw;
+            if (ex.SocketErrorCode != SocketError.ConnectionRefused) throw;
         }
+
+        // if it didn't work, try to launch MHH
+        if (!client.Connected)
+        {
+            if (!await LaunchMonkeyHiHat()) return (false, null);
+
+            // try to connect to MHH again
+            try
+            {
+                await client.ConnectAsync(IPAddress.Loopback, Config.MHHPort).ConfigureAwait(false);
+            }
+            catch (SocketException ex)
+            {
+                if (ex.SocketErrorCode != SocketError.ConnectionRefused) throw;
+            }
+            if (!client.Connected) return (false, null);
+        }
+
+        // send the message
+        await WriteString(client, message);
+
+        // try to get a response
+        var response = await ReadString(client);
+        return (true, response);
     }
 
     private static async Task WriteString(TcpClient client, string message)
@@ -115,5 +122,31 @@ public static class TcpRelayServer
         }
         catch
         { }
+    }
+
+    private static async Task<bool> LaunchMonkeyHiHat()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            if (Environment.UserInteractive)
+            {
+                var success = Process.Start("mhh.exe") is not null;
+                if (success) await Task.Delay(Config.ProcessStarttMillisec);
+                return success;
+            }
+            else
+            {
+                // https://stackoverflow.com/questions/4278373/
+            }
+        }
+
+        if (OperatingSystem.IsLinux())
+        {
+            var success = Process.Start("mhh") is not null;
+            if (success) await Task.Delay(Config.ProcessStarttMillisec);
+            return success;
+        }
+
+        return false;
     }
 }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "msmd": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Source\\monkey-hi-hat\\mhh\\mhh\\bin\\x64\\Debug\\net8.0"
+    }
+  }
+}
