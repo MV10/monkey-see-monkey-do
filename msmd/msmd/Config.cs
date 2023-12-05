@@ -76,14 +76,14 @@ public static class Config
             }
         }
 
-        pathname = Path.GetFullPath(Path.Combine($".{Path.DirectorySeparatorChar}", filename));
+        pathname = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filename));
         if (File.Exists(pathname))
         {
             Console.WriteLine($"Loading configuration from application directory:\n  {pathname}");
             return pathname;
         }
 
-        pathname = Path.GetFullPath(Path.Combine($".{Path.DirectorySeparatorChar}ConfigFiles", filename));
+        pathname = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ConfigFiles", filename));
         if (File.Exists(pathname))
         {
             Console.WriteLine($"Loading configuration from ConfigFiles sub-directory:\n  {pathname}");

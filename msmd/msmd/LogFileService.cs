@@ -9,7 +9,7 @@ public class LogFileService
 
     public LogFileService()
     {
-        LogFilePathname = Path.Combine(Directory.GetCurrentDirectory(), "msmd.log");
+        LogFilePathname = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "msmd.log");
         try
         {
             if (File.Exists(LogFilePathname)) File.Delete(LogFilePathname);
