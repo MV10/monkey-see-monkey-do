@@ -6,28 +6,37 @@ using System.Diagnostics;
 
 namespace msmd;
 
-public static class TcpRelayServer
+public class TcpRelayServer(LogFileService logger)
 {
-    public static async Task StartServer(CancellationToken cancellationToken)
+    public async Task StartServer(CancellationToken cancellationToken)
     {
         TcpListener server = null;
         try
         {
+            await logger.WriteLine($"Listening on TCP port {Config.ListenPort}");
             server = new(IPAddress.Any, Config.ListenPort);
             server.Start(); // This merely queues connection requests
 
             while (!cancellationToken.IsCancellationRequested)
             {
+                await logger.WriteLine("Waiting for client connection");
                 using var client = await server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
+                await logger.WriteLine("Client connected");
                 try
                 {
                     var message = await ReadString(client);
                     if (!string.IsNullOrWhiteSpace(message))
                     {
+                        await logger.WriteLine($"Incoming from remote: {message}");
                         var (success, response) = await TryRelay(message);
                         if (!success) response = "ERR: Can't relay to application";
+                        await logger.WriteLine($"Response to remote: {response}");
                         await WriteString(client, response);
+                    }
+                    else
+                    {
+                        await logger.WriteLine("No message received from remote");
                     }
                 }
                 catch
@@ -46,7 +55,7 @@ public static class TcpRelayServer
         }
     }
 
-    private static async Task<string> ReadString(TcpClient client)
+    private async Task<string> ReadString(TcpClient client)
     {
         var response = string.Empty;
 
@@ -69,37 +78,49 @@ public static class TcpRelayServer
         return response;
     }
 
-    private static async Task<(bool success, string response)> TryRelay(string message)
+    private async Task<(bool success, string response)> TryRelay(string message)
     {
+        await logger.WriteLine("Trying to relay to Monkey Hi Hat");
         using TcpClient client = new();
         // try to connect to MHH; ConnectionRefused means nothing is listening
         try
         {
-            await client.ConnectAsync(IPAddress.Loopback, Config.MHHPort).ConfigureAwait(false);
+            await client.ConnectAsync(Config.Localhost, Config.MHHPort).ConfigureAwait(false);
         }
         catch(SocketException ex)
         {
-            if (ex.SocketErrorCode != SocketError.ConnectionRefused) throw;
+            if (ex.SocketErrorCode != SocketError.ConnectionRefused)
+            {
+                await logger.WriteLine($"Exception {ex}\n{ex.Message}");
+                throw;
+            }
         }
 
         // if it didn't work, try to launch MHH
         if (!client.Connected)
         {
+            await logger.WriteLine("Trying to start Monkey Hi Hat");
             if (!await LaunchMonkeyHiHat()) return (false, null);
 
             // try to connect to MHH again
+            await logger.WriteLine("Trying to relay to Monkey Hi Hat again");
             try
             {
-                await client.ConnectAsync(IPAddress.Loopback, Config.MHHPort).ConfigureAwait(false);
+                await client.ConnectAsync(Config.Localhost, Config.MHHPort).ConfigureAwait(false);
             }
             catch (SocketException ex)
             {
-                if (ex.SocketErrorCode != SocketError.ConnectionRefused) throw;
+                if (ex.SocketErrorCode != SocketError.ConnectionRefused)
+                {
+                    await logger.WriteLine($"Exception {ex}\n{ex.Message}");
+                    throw;
+                }
             }
             if (!client.Connected) return (false, null);
         }
 
         // send the message
+        await logger.WriteLine("Connected, relaying message");
         await WriteString(client, message);
 
         // try to get a response
@@ -107,7 +128,7 @@ public static class TcpRelayServer
         return (true, response);
     }
 
-    private static async Task WriteString(TcpClient client, string message)
+    private async Task WriteString(TcpClient client, string message)
     {
         try
         {
@@ -124,7 +145,7 @@ public static class TcpRelayServer
         { }
     }
 
-    private static async Task<bool> LaunchMonkeyHiHat()
+    private async Task<bool> LaunchMonkeyHiHat()
     {
         if (OperatingSystem.IsWindows())
         {

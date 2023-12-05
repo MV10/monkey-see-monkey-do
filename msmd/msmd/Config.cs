@@ -1,5 +1,7 @@
 ﻿
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 
 namespace msmd;
 
@@ -11,16 +13,21 @@ public static class Config
 
     public static readonly int ProcessStarttMillisec = 5000;
 
-    // mhh.conf UnsecuredRelayPort
+    // mhh.conf UnsecuredPort (used by MHH itself)
+    public static int MHHPort = 0;
+
+    // mhh.conf UnsecuredRelayPort (msmd section)
     public static int ListenPort = 0;
 
-    // mhh.conf UnsecuredPort
-    public static int MHHPort = 0;
+    // mhh.conf RelayIPType (msmd section)
+    public static IPAddress[] Localhost;
 
     static Config()
     {
         var pathname = FindAppConfig();
         if (pathname is null) return;
+
+        AddressFamily ipType = AddressFamily.Unknown;
 
         foreach (var rawline in File.ReadAllLines(pathname))
         {
@@ -34,11 +41,17 @@ public static class Config
                 {
                     if (setting == "unsecuredport") MHHPort = value;
                     if (setting == "unsecuredrelayport") ListenPort = value;
+                    if (setting == "relayiptype") ipType = (value == 4) ? AddressFamily.InterNetwork : (value == 6) ? AddressFamily.InterNetworkV6 : AddressFamily.Unspecified;
 
-                    if (MHHPort > 0 && ListenPort > 0) break;
+                    if (MHHPort > 0 && ListenPort > 0 && ipType != AddressFamily.Unknown) break;
                 }
             }
         }
+
+        // If IPType wasn't provided, default to Unspecified (IPv4 and IPv6)
+        ipType = (ipType == AddressFamily.Unknown) ? AddressFamily.Unspecified : ipType;
+
+        Localhost = Dns.GetHostAddresses("localhost", ipType);
     }
 
     // Based on the Program.cs method in Monkey Hi Hat by the same name
