@@ -6,6 +6,8 @@ A simple service that listens on a TCP port for [Monkey Hi Hat](https://github.c
 
 Although MHH itself has the ability to listen on TCP (and this relay service requires it), if the program is to be used exclusively remotely (such as via [Monkey Droid](https://github.com/MV10/monkey-droid) from an Android phone or tablet, or a remote Windows laptop or computer), the most practical usage (without this service) is to leave MHH running indefinitely -- probably in standby mode, which still leaves a console window on-screen in the current iteration. This service eliminates that need.
 
+The program must be executed from the same directory as `mhh.exe`.
+
 ## TCP Port Configuration
 The application is deployed alongside MHH and reads the MHH configuration file (subject to all the same environment variables and other config file rules, which are documented in the MHH repository). The MHH `UnsecuredPort` setting must be used (which tells MHH to listen over TCP, and port 50001 is the default), and this service also requires an `UnsecuredRelayPort` setting (which is the port used by this service, and port 50002 is the default). If either is not found, the service will log an error and exit. You can also specify `RelayIPType` with a value of 4 or 6 to restrict localhost IP resolution to IPv4 or IPv6, which can result in much lower connection latency.
 
@@ -48,10 +50,6 @@ Although the program is intended to be called from Monkey Droid, you can issue c
 For debugging the project interactively in Visual Studio, the Debug Properties working directory must point to a location with the Monkey Hi Hat executable, since the deployed application will be side-by-side with MHH itself.
 
 ## TODO
-* Windows local and service process-launch
-* Linux process-launch
-* Logging uses MS ILogger
-* Both OSes log to console in interactive mode?
-* Windows - log to Event Viewer in service mode
-* Linux logging to journal in service mode
+* Windows service process-launch
+* Test Linux process-launch
 * Finish Linux systemd support https://devblogs.microsoft.com/dotnet/net-core-and-systemd/

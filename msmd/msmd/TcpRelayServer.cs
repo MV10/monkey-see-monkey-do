@@ -157,7 +157,9 @@ public class TcpRelayServer(LogFileService logger)
             }
             else
             {
-                // https://stackoverflow.com/questions/4278373/
+                var success = ProcessExtensions.StartProcessAsCurrentUser("mhh.exe");
+                if (success) await Task.Delay(Config.ProcessStarttMillisec);
+                return success;
             }
         }
 
