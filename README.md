@@ -50,11 +50,10 @@ Although the program is intended to be called from Monkey Droid, you can issue c
 For debugging the project interactively in Visual Studio, the Debug Properties working directory must point to a location with the Monkey Hi Hat executable, since the deployed application will be side-by-side with MHH itself.
 
 ## Beware the BOM
-If you're editing plain-text files like the `cmd` files, be aware of a long-standing Visual Studio bug that inserts useless, invisible BOM (Byte Order Marker) characters into the file. (UTF-8 is by definition single-byte, so "byte order" is meaningless). The only way to fix the file is to modify it in a better editor like Notepad++. More than 6 years and they still haven't fixed this. Pretty sad.
+If you're editing plain-text files like the `cmd` files, be aware of a long-standing Visual Studio bug that inserts useless, invisible BOM (Byte Order Marker) characters into the file. (UTF-8 is by definition single-byte, so "byte order" is meaningless.) The only way to fix the file is to modify it in a better editor like Notepad++. More than 6 years and they still haven't fixed this. Pretty sad.
 
 https://developercommunity.visualstudio.com/t/utf-8-save-as-without-signature-default-request-to/787476
 
 ## TODO
-* Windows service process-launch
 * Test Linux process-launch
 * Finish Linux systemd support https://devblogs.microsoft.com/dotnet/net-core-and-systemd/

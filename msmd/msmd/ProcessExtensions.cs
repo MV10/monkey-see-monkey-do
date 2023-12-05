@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace msmd;
 
-// This comes from https://github.com/murrayju/CreateProcessAsUser
-// with some changes applied based on abandoned PRs and issues, and
-// see also // https://stackoverflow.com/questions/4278373/
+// This comes from https://github.com/murrayju/CreateProcessAsUser with
+// some changes (tagged MV10) applied, based on abandoned PRs and issues,
+// and see also https://stackoverflow.com/questions/4278373/
 
 public static class ProcessExtensions
 {
@@ -16,6 +16,7 @@ public static class ProcessExtensions
 
     private const uint INVALID_SESSION_ID = 0xFFFFFFFF;
     private static readonly IntPtr WTS_CURRENT_SERVER_HANDLE = IntPtr.Zero;
+    private const int STARTF_USESHOWWINDOW = 0x00000001;
 
     [DllImport("advapi32.dll", EntryPoint = "CreateProcessAsUser", SetLastError = true, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.StdCall)]
     private static extern bool CreateProcessAsUser(
@@ -63,6 +64,9 @@ public static class ProcessExtensions
         int Version,
         ref IntPtr ppSessionInfo,
         ref int pCount);
+
+    [DllImport("Wtsapi32.dll")]
+    private static extern void WTSFreeMemory(IntPtr ppSessionInfo);
 
     private enum SW
     {
@@ -178,6 +182,9 @@ public static class ProcessExtensions
                     activeSessionId = si.SessionID;
                 }
             }
+
+            // MV10 - https://github.com/murrayju/CreateProcessAsUser/issues/5
+            WTSFreeMemory(pSessionInfo);
         }
 
         // If enumerating did not work, fall back to the old method
@@ -217,6 +224,7 @@ public static class ProcessExtensions
             }
 
             uint dwCreationFlags = CREATE_UNICODE_ENVIRONMENT | (uint)(visible ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
+            startInfo.dwFlags = STARTF_USESHOWWINDOW;
             startInfo.wShowWindow = (short)(visible ? SW.SW_SHOW : SW.SW_HIDE);
             startInfo.lpDesktop = "winsta0\\default";
 
@@ -224,6 +232,9 @@ public static class ProcessExtensions
             {
                 throw new Exception("StartProcessAsCurrentUser: CreateEnvironmentBlock failed.");
             }
+
+            // MV10 - https://stackoverflow.com/a/47122570/152997
+            if (workDir is not null) Directory.SetCurrentDirectory(workDir);
 
             if (!CreateProcessAsUser(hUserToken,
                 appPath, // Application Name

@@ -147,29 +147,42 @@ public class TcpRelayServer(LogFileService logger)
 
     private async Task<bool> LaunchMonkeyHiHat()
     {
-        if (OperatingSystem.IsWindows())
+        bool success = false;
+
+        try
         {
-            if (Environment.UserInteractive)
+            if (OperatingSystem.IsWindows())
             {
-                var success = Process.Start("mhh.exe") is not null;
-                if (success) await Task.Delay(Config.ProcessStarttMillisec);
-                return success;
+                if (Environment.UserInteractive)
+                {
+                    success = Process.Start("mhh.exe") is not null;
+                }
+                else
+                {
+                    var pathname = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mhh.exe");
+                    success = ProcessExtensions.StartProcessAsCurrentUser(pathname, workDir: AppDomain.CurrentDomain.BaseDirectory);
+                }
             }
-            else
+
+            if (OperatingSystem.IsLinux())
             {
-                var success = ProcessExtensions.StartProcessAsCurrentUser("mhh.exe");
-                if (success) await Task.Delay(Config.ProcessStarttMillisec);
-                return success;
+                success = Process.Start("mhh") is not null;
             }
         }
-
-        if (OperatingSystem.IsLinux())
+        catch(Exception ex)
         {
-            var success = Process.Start("mhh") is not null;
-            if (success) await Task.Delay(Config.ProcessStarttMillisec);
-            return success;
+            await logger.WriteLine($"{ex}: {ex.Message}");
         }
 
-        return false;
+        if (success)
+        {
+            await Task.Delay(Config.ProcessStarttMillisec);
+        }
+        else
+        {
+            await logger.WriteLine("Failed to start app");
+        }
+
+        return success;
     }
 }
