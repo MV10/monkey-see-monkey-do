@@ -1,4 +1,4 @@
-﻿@openfiles.exe 1>nul 2>&1
+@openfiles.exe 1>nul 2>&1
 @if not %errorlevel% equ 0 goto :fail
 sc delete "Monkey Hi Hat TCP Relay (msmd)"
 @goto:eof
