@@ -1,6 +1,6 @@
 # monkey-see-monkey-do
 
-| Version 1.0.0 is available on the Releases page at the right.
+| Version 1.0.1 is available on the Releases page at the right, although as of Monkey Hi Hat v4.0.0 this is deployed and installed alongside the application (but is not automatically started).
 
 A simple service that listens on a TCP port for [Monkey Hi Hat](https://github.com/MV10/monkey-hi-hat) (MHH) commands and relays them to the locally-running copy. If the application isn't running when a command is received, the program will launch it, then relay the command, which is the main value of this service. Any response to the command will be relayed back to the sender, as if MHH itself was contacted directly.
 

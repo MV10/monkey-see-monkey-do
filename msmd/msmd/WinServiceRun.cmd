@@ -1,4 +1,4 @@
-@openfiles.exe 1>nul 2>&1
+@fsutil dirty query %systemdrive% 1>nul 2>&1
 @if not %errorlevel% equ 0 goto :fail
 sc start "Monkey Hi Hat TCP Relay (msmd)"
 @goto:eof
